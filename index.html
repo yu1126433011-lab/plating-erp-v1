@@ -8,6 +8,10 @@
 <meta name="viewport"
 content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 
+<meta name="theme-color" content="#007aff">
+
+<link rel="manifest" href="manifest.json">
+
 <title>电镀ERP V1.0</title>
 
 
@@ -183,6 +187,8 @@ color:var(--sub);
 
 cursor:pointer;
 
+flex:1;
+
 }
 
 
@@ -195,7 +201,7 @@ font-size:24px;
 }
 
 
-.active{
+.item.active{
 
 color:var(--blue);
 
@@ -216,6 +222,8 @@ padding:12px 20px;
 border-radius:15px;
 
 margin-top:10px;
+
+cursor:pointer;
 
 }
 
@@ -243,6 +251,89 @@ box-sizing:border-box;
 
 
 
+/* 加载动画 */
+
+.loading{
+
+position:fixed;
+
+top:0;
+
+left:0;
+
+right:0;
+
+bottom:0;
+
+background:rgba(255,255,255,.95);
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+z-index:999;
+
+font-size:18px;
+
+flex-direction:column;
+
+}
+
+
+.dark .loading{
+
+background:rgba(0,0,0,.95);
+
+}
+
+
+.spinner{
+
+width:40px;
+
+height:40px;
+
+border-radius:50%;
+
+border:4px solid #ddd;
+
+border-top-color:#007aff;
+
+animation:spin 1s linear infinite;
+
+margin-bottom:10px;
+
+}
+
+
+@keyframes spin{
+
+to{
+
+transform:rotate(360deg);
+
+}
+
+}
+
+
+
+/* 空状态 */
+
+.empty{
+
+text-align:center;
+
+color:var(--sub);
+
+padding:40px 20px;
+
+}
+
+
+
 </style>
 
 </head>
@@ -250,6 +341,17 @@ box-sizing:border-box;
 
 <body>
 
+<div class="loading" id="loading">
+
+<div>
+
+<div class="spinner"></div>
+
+<p>系统加载中...</p>
+
+</div>
+
+</div>
 
 
 <div id="home">
@@ -316,6 +418,10 @@ box-sizing:border-box;
 
 
 <p>
+电镀ERP V1.0
+</p>
+
+<p>
 数据保存于本机
 </p>
 
@@ -341,7 +447,7 @@ box-sizing:border-box;
 
 <div id="log">
 
-暂无记录
+<div class="empty">暂无记录</div>
 
 </div>
 
@@ -436,7 +542,11 @@ style="width:100%;padding:12px;margin-top:10px">
 </h3>
 
 
-<div id="records"></div>
+<div id="records">
+
+<div class="empty">暂无记录</div>
+
+</div>
 
 
 </div>
@@ -543,6 +653,8 @@ style="width:100%;padding:12px;margin-top:10px">
 
 <div id="wxRecords">
 
+<div class="empty">暂无记录</div>
+
 </div>
 
 
@@ -589,6 +701,8 @@ style="width:100%;padding:12px;border-radius:12px">
 </h3>
 
 <div id="inventoryList">
+
+<div class="empty">暂无库存</div>
 
 </div>
 
@@ -649,6 +763,8 @@ style="width:100%;padding:12px;border-radius:12px">
 </h3>
 
 <div id="reportList">
+
+<div class="empty">暂无记录</div>
 
 </div>
 
@@ -741,9 +857,7 @@ style="width:100%;padding:12px;border-radius:12px;margin-top:10px">
 系统信息
 </h3>
 
-<p>版本：V1.0.0</p>
-
-<p>电镀ERP单机版</p>
+<p>电镀ERP V1.0</p>
 
 <p id="sysInfo"></p>
 
@@ -757,7 +871,7 @@ style="width:100%;padding:12px;border-radius:12px;margin-top:10px">
 <div class="nav">
 
 
-<div class="item active" onclick="showPage('home')">
+<div class="item active" onclick="switchPage('home', this)">
 
 <b>⌂</b>
 
@@ -766,7 +880,7 @@ style="width:100%;padding:12px;border-radius:12px;margin-top:10px">
 </div>
 
 
-<div class="item" onclick="showPage('flow')">
+<div class="item" onclick="switchPage('flow', this)">
 
 <b>⇅</b>
 
@@ -775,7 +889,7 @@ style="width:100%;padding:12px;border-radius:12px;margin-top:10px">
 </div>
 
 
-<div class="item" onclick="showPage('inventoryPage')">
+<div class="item" onclick="switchPage('inventoryPage', this)">
 
 <b>▣</b>
 
@@ -784,7 +898,7 @@ style="width:100%;padding:12px;border-radius:12px;margin-top:10px">
 </div>
 
 
-<div class="item" onclick="showPage('outsource')">
+<div class="item" onclick="switchPage('outsource', this)">
 
 <b>↔</b>
 
@@ -793,7 +907,7 @@ style="width:100%;padding:12px;border-radius:12px;margin-top:10px">
 </div>
 
 
-<div class="item" onclick="showPage('reportPage')">
+<div class="item" onclick="switchPage('reportPage', this)">
 
 <b>📊</b>
 
@@ -802,7 +916,7 @@ style="width:100%;padding:12px;border-radius:12px;margin-top:10px">
 </div>
 
 
-<div class="item" onclick="showPage('settingPage')">
+<div class="item" onclick="switchPage('settingPage', this)">
 
 <b>⚙</b>
 
@@ -851,7 +965,7 @@ name:"电镀ERP",
 
 version:"1.0.0",
 
-company:""
+build:"20260710"
 
 }
 
@@ -928,6 +1042,25 @@ x.style.display="none";
 document.getElementById(id)
 .style.display="block";
 
+
+}
+
+
+
+function switchPage(id, element){
+
+showPage(id);
+
+document.querySelectorAll(
+".nav .item"
+)
+.forEach(
+x=>{
+x.classList.remove("active");
+}
+);
+
+element.classList.add("active");
 
 }
 
@@ -1080,6 +1213,8 @@ document.getElementById("inMaterial").value="";
 
 document.getElementById("inQty").value="";
 
+alert("入库成功");
+
 }
 
 
@@ -1170,6 +1305,8 @@ document.getElementById("outMaterial").value="";
 
 document.getElementById("outQty").value="";
 
+alert("出库成功");
+
 }
 
 
@@ -1214,7 +1351,7 @@ ${x.time}
 
 document.getElementById(
 "records"
-).innerHTML=html;
+).innerHTML=html||"<div class='empty'>暂无记录</div>";
 
 
 }
@@ -1378,6 +1515,8 @@ document.getElementById("wxFactory").value="";
 
 document.getElementById("wxQty").value="";
 
+alert("发出成功");
+
 }
 
 
@@ -1476,6 +1615,8 @@ refreshWx();
 
 document.getElementById("backQty").value="";
 
+alert("收回成功");
+
 }
 
 
@@ -1526,7 +1667,7 @@ html+=`
 
 
 
-document.getElementById("wxRecords").innerHTML=html;
+document.getElementById("wxRecords").innerHTML=html||"<div class='empty'>暂无记录</div>";
 
 
 
@@ -1692,7 +1833,7 @@ document.getElementById(
 "inventoryList"
 ).innerHTML=
 html||
-"暂无库存";
+"<div class='empty'>暂无库存</div>";
 
 
 
@@ -1848,7 +1989,7 @@ document.getElementById(
 "reportList"
 ).innerHTML=
 
-html||"暂无记录";
+html||"<div class='empty'>暂无记录</div>";
 
 
 
@@ -2039,11 +2180,7 @@ e.target.result
 
 save();
 
-
-
-alert(
-"恢复成功，请刷新页面"
-);
+location.reload();
 
 }catch(err){
 
@@ -2074,12 +2211,30 @@ save();
 
 
 
+// 页面加载完成
+
+window.onload=function(){
+
+setTimeout(()=>{
+
+document.getElementById(
+"loading"
+).style.display="none";
+
+initSystem();
+
+},800);
+
+};
+
+
+
 // 系统初始化
 
 function initSystem(){
 
 document.getElementById("sysInfo").innerHTML=
-"数据量："+JSON.stringify(DB).length+" 字节";
+"版本："+DB.system.version+"<br>编译："+DB.system.build+"<br>数据量："+JSON.stringify(DB).length+" 字节";
 
 }
 
@@ -2098,8 +2253,6 @@ refreshInventory();
 renderReport();
 
 dashboard();
-
-initSystem();
 
 </script>
 
