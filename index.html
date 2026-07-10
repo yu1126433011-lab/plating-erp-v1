@@ -213,11 +213,13 @@ padding:12px 20px;
 
 border-radius:15px;
 
+margin-top:10px;
+
 }
 
 
 
-input{
+input, select{
 
 border:none;
 
@@ -225,7 +227,11 @@ background:var(--card);
 
 color:var(--text);
 
+padding:12px;
+
 margin-top:10px;
+
+border-radius:12px;
 
 }
 
@@ -244,7 +250,7 @@ margin-top:10px;
 
 <h1>电镀ERP</h1>
 
-<p>收发存 · 外协管理系统</p>
+<p>收发存 · 外协管���系统</p>
 
 </header>
 
@@ -337,51 +343,45 @@ margin-top:10px;
 
 
 
-<div id="basic"
-style="display:none">
-
+<div id="flow" style="display:none">
 
 <header>
 
 <h1>
-基础资料
+收发管理
 </h1>
 
 <p>
-物料与合作单位
+入库 / 出库
 </p>
 
 </header>
 
 
+
 <div class="card">
 
-
 <h3>
-新增物料
+入库
 </h3>
 
 
-<input id="mName"
-placeholder="物料名称"
-style="width:100%;padding:12px;border-radius:12px">
+<select id="inMaterial"
+style="width:100%;padding:12px">
+</select>
 
 
-<input id="mSpec"
-placeholder="规格型号"
-style="width:100%;padding:12px;margin-top:10px;border-radius:12px">
+<input id="inQty"
+type="number"
+placeholder="数量"
+style="width:100%;padding:12px;margin-top:10px">
 
 
-<button onclick="addMaterial()">
+<button onclick="stockIn()">
 
-保存物料
+确认入库
 
 </button>
-
-
-<div id="materialList">
-
-</div>
 
 
 </div>
@@ -391,25 +391,27 @@ style="width:100%;padding:12px;margin-top:10px;border-radius:12px">
 
 <div class="card">
 
-
 <h3>
-外协厂家
+出库
 </h3>
 
 
-<input id="wxName"
-placeholder="外协厂名称"
-style="width:100%;padding:12px;border-radius:12px">
+<select id="outMaterial"
+style="width:100%;padding:12px">
+</select>
 
 
-<button onclick="addWx()">
+<input id="outQty"
+type="number"
+placeholder="数量"
+style="width:100%;padding:12px;margin-top:10px">
 
-保存外协
+
+<button onclick="stockOut()">
+
+确认出库
 
 </button>
-
-
-<div id="wxList"></div>
 
 
 </div>
@@ -419,30 +421,15 @@ style="width:100%;padding:12px;border-radius:12px">
 
 <div class="card">
 
-
 <h3>
-供应商
+库存流水
 </h3>
 
 
-<input id="supName"
-placeholder="供应商名称"
-style="width:100%;padding:12px;border-radius:12px">
-
-
-<button onclick="addSupplier()">
-
-保存供应商
-
-</button>
-
-
-<div id="supList"></div>
+<div id="records"></div>
 
 
 </div>
-
-
 
 
 </div>
@@ -453,11 +440,20 @@ style="width:100%;padding:12px;border-radius:12px">
 <div class="nav">
 
 
-<div class="item active">
+<div class="item active" onclick="showPage('home')">
 
 <b>⌂</b>
 
 首页
+
+</div>
+
+
+<div class="item" onclick="showPage('flow')">
+
+<b>⇅</b>
+
+收发
 
 </div>
 
@@ -476,15 +472,6 @@ style="width:100%;padding:12px;border-radius:12px">
 <b>↔</b>
 
 外协
-
-</div>
-
-
-<div class="item" onclick="showPage('basic')">
-
-<b>▤</b>
-
-资料
 
 </div>
 
@@ -520,10 +507,6 @@ localStorage.getItem(
 
 
 materials:[],
-
-suppliers:[],
-
-outsources:[],
 
 inventory:[],
 
@@ -589,188 +572,306 @@ x=>x.type=="wx"
 refresh();
 
 
-function code(prefix){
-
-return prefix+
-Date.now();
-
-}
-
-
-
-//新增物料
-
-function addMaterial(){
-
-let name =
-document.getElementById(
-"mName"
-).value;
-
-
-let spec =
-document.getElementById(
-"mSpec"
-).value;
-
-
-if(!name)return;
-
-
-DB.materials.push({
-
-id:code("WL"),
-
-name:name,
-
-spec:spec
-
-});
-
-
-save();
-
-showBasic();
-
-}
-
-
-
-//新增外协
-
-function addWx(){
-
-let name=
-document.getElementById(
-"wxName"
-).value;
-
-
-if(!name)return;
-
-
-DB.outsources.push({
-
-id:code("WX"),
-
-name:name
-
-});
-
-
-save();
-
-showBasic();
-
-}
-
-
-
-//供应商
-
-function addSupplier(){
-
-let name=
-document.getElementById(
-"supName"
-).value;
-
-
-if(!name)return;
-
-
-DB.suppliers.push({
-
-id:code("GY"),
-
-name:name
-
-});
-
-
-save();
-
-showBasic();
-
-}
-
-
-
-
-function showBasic(){
-
-
-document.getElementById(
-"materialList"
-).innerHTML=
-
-DB.materials.map(
-
-(x,i)=>
-
-`
-<p>
-${x.id}
-<br>
-${x.name}
-${x.spec||""}
-
-</p>
-`
-
-).join("");
-
-
-
-
-document.getElementById(
-"wxList"
-).innerHTML=
-
-DB.outsources.map(
-
-x=>`<p>${x.name}</p>`
-
-).join("");
-
-
-
-
-document.getElementById(
-"supList"
-).innerHTML=
-
-DB.suppliers.map(
-
-x=>`<p>${x.name}</p>`
-
-).join("");
-
-
-
-}
-
-
 
 function showPage(id){
 
 document.querySelectorAll(
-"body>div"
+"body>div[id]"
 )
 .forEach(
-x=>x.style.display="none"
+x=>{
+if(x.id=="flow" || x.id=="home") {
+x.style.display="none";
+}
+}
 );
 
 
-document.getElementById(id)
-.style.display="block";
+if(id=="home"){
+
+document.querySelector("header").parentElement.style.display="block";
+
+}else if(id=="flow"){
+
+document.getElementById("flow").style.display="block";
+
+}
 
 
 }
 
 
 
-showBasic();
+//生成单号
+
+function orderNo(type){
+
+let d=new Date();
+
+return type+
+d.getFullYear()
++
+(d.getMonth()+1)
++
+d.getDate()
++
+Math.floor(Math.random()*9000+1000);
+
+}
+
+
+
+
+//刷新物料选择
+
+function loadMaterialSelect(){
+
+let html="<option value=''>选择物料</option>";
+
+DB.materials.forEach(x=>{
+
+html+=`
+
+<option value="${x.id}">
+${x.name}
+</option>
+
+`;
+
+});
+
+
+document.getElementById(
+"inMaterial"
+).innerHTML=html;
+
+
+document.getElementById(
+"outMaterial"
+).innerHTML=html;
+
+}
+
+
+
+
+//入库
+
+function stockIn(){
+
+
+let id=
+document.getElementById(
+"inMaterial"
+).value;
+
+
+let qty=
+Number(
+document.getElementById(
+"inQty"
+).value
+);
+
+
+if(!id || !qty){
+alert("请选择物料和输入数量");
+return;
+}
+
+
+let item=
+DB.inventory.find(
+x=>x.id==id
+);
+
+
+
+if(item){
+
+item.qty+=qty;
+
+}else{
+
+DB.inventory.push({
+
+id:id,
+
+qty:qty
+
+});
+
+}
+
+
+
+DB.records.push({
+
+no:orderNo("RK"),
+
+type:"入库",
+
+id:id,
+
+qty:qty,
+
+time:new Date().toLocaleString()
+
+});
+
+
+
+DB.logs.push(
+"入库 "+qty
+);
+
+
+save();
+
+refresh();
+
+showRecords();
+
+document.getElementById("inMaterial").value="";
+
+document.getElementById("inQty").value="";
+
+}
+
+
+
+
+
+//出库
+
+function stockOut(){
+
+
+let id=
+document.getElementById(
+"outMaterial"
+).value;
+
+
+let qty=
+Number(
+document.getElementById(
+"outQty"
+).value
+);
+
+
+if(!id || !qty){
+alert("请选择物料和输入数量");
+return;
+}
+
+
+let item=
+DB.inventory.find(
+x=>x.id==id
+);
+
+
+
+if(!item || item.qty<qty){
+
+alert("库存不足");
+
+return;
+
+}
+
+
+
+item.qty-=qty;
+
+
+
+DB.records.push({
+
+no:orderNo("CK"),
+
+type:"出库",
+
+id:id,
+
+qty:qty,
+
+time:new Date().toLocaleString()
+
+});
+
+
+DB.logs.push(
+"出库 "+qty
+);
+
+
+save();
+
+refresh();
+
+showRecords();
+
+document.getElementById("outMaterial").value="";
+
+document.getElementById("outQty").value="";
+
+}
+
+
+
+
+function showRecords(){
+
+
+let html="";
+
+
+DB.records
+.slice()
+.reverse()
+.forEach(x=>{
+
+
+html+=`
+
+<p>
+
+${x.no}
+
+<br>
+
+${x.type}
+
+数量:${x.qty}
+
+<br>
+
+${x.time}
+
+</p>
+
+<hr>
+
+`;
+
+});
+
+
+document.getElementById(
+"records"
+).innerHTML=html;
+
+
+}
+
+
+
+loadMaterialSelect();
+
+showRecords();
 
 </script>
 
