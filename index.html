@@ -217,6 +217,20 @@ border-radius:15px;
 
 
 
+input{
+
+border:none;
+
+background:var(--card);
+
+color:var(--text);
+
+margin-top:10px;
+
+}
+
+
+
 </style>
 
 </head>
@@ -323,6 +337,119 @@ border-radius:15px;
 
 
 
+<div id="basic"
+style="display:none">
+
+
+<header>
+
+<h1>
+基础资料
+</h1>
+
+<p>
+物料与合作单位
+</p>
+
+</header>
+
+
+<div class="card">
+
+
+<h3>
+新增物料
+</h3>
+
+
+<input id="mName"
+placeholder="物料名称"
+style="width:100%;padding:12px;border-radius:12px">
+
+
+<input id="mSpec"
+placeholder="规格型号"
+style="width:100%;padding:12px;margin-top:10px;border-radius:12px">
+
+
+<button onclick="addMaterial()">
+
+保存物料
+
+</button>
+
+
+<div id="materialList">
+
+</div>
+
+
+</div>
+
+
+
+
+<div class="card">
+
+
+<h3>
+外协厂家
+</h3>
+
+
+<input id="wxName"
+placeholder="外协厂名称"
+style="width:100%;padding:12px;border-radius:12px">
+
+
+<button onclick="addWx()">
+
+保存外协
+
+</button>
+
+
+<div id="wxList"></div>
+
+
+</div>
+
+
+
+
+<div class="card">
+
+
+<h3>
+供应商
+</h3>
+
+
+<input id="supName"
+placeholder="供应商名称"
+style="width:100%;padding:12px;border-radius:12px">
+
+
+<button onclick="addSupplier()">
+
+保存供应商
+
+</button>
+
+
+<div id="supList"></div>
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+
 <div class="nav">
 
 
@@ -349,6 +476,15 @@ border-radius:15px;
 <b>↔</b>
 
 外协
+
+</div>
+
+
+<div class="item" onclick="showPage('basic')">
+
+<b>▤</b>
+
+资料
 
 </div>
 
@@ -385,6 +521,10 @@ localStorage.getItem(
 
 materials:[],
 
+suppliers:[],
+
+outsources:[],
+
 inventory:[],
 
 records:[],
@@ -392,7 +532,6 @@ records:[],
 logs:[]
 
 };
-
 
 
 
@@ -412,7 +551,6 @@ JSON.stringify(DB)
 
 
 
-
 function darkMode(){
 
 document.body.classList.toggle(
@@ -420,7 +558,6 @@ document.body.classList.toggle(
 );
 
 }
-
 
 
 
@@ -452,6 +589,188 @@ x=>x.type=="wx"
 refresh();
 
 
+function code(prefix){
+
+return prefix+
+Date.now();
+
+}
+
+
+
+//新增物料
+
+function addMaterial(){
+
+let name =
+document.getElementById(
+"mName"
+).value;
+
+
+let spec =
+document.getElementById(
+"mSpec"
+).value;
+
+
+if(!name)return;
+
+
+DB.materials.push({
+
+id:code("WL"),
+
+name:name,
+
+spec:spec
+
+});
+
+
+save();
+
+showBasic();
+
+}
+
+
+
+//新增外协
+
+function addWx(){
+
+let name=
+document.getElementById(
+"wxName"
+).value;
+
+
+if(!name)return;
+
+
+DB.outsources.push({
+
+id:code("WX"),
+
+name:name
+
+});
+
+
+save();
+
+showBasic();
+
+}
+
+
+
+//供应商
+
+function addSupplier(){
+
+let name=
+document.getElementById(
+"supName"
+).value;
+
+
+if(!name)return;
+
+
+DB.suppliers.push({
+
+id:code("GY"),
+
+name:name
+
+});
+
+
+save();
+
+showBasic();
+
+}
+
+
+
+
+function showBasic(){
+
+
+document.getElementById(
+"materialList"
+).innerHTML=
+
+DB.materials.map(
+
+(x,i)=>
+
+`
+<p>
+${x.id}
+<br>
+${x.name}
+${x.spec||""}
+
+</p>
+`
+
+).join("");
+
+
+
+
+document.getElementById(
+"wxList"
+).innerHTML=
+
+DB.outsources.map(
+
+x=>`<p>${x.name}</p>`
+
+).join("");
+
+
+
+
+document.getElementById(
+"supList"
+).innerHTML=
+
+DB.suppliers.map(
+
+x=>`<p>${x.name}</p>`
+
+).join("");
+
+
+
+}
+
+
+
+function showPage(id){
+
+document.querySelectorAll(
+"body>div"
+)
+.forEach(
+x=>x.style.display="none"
+);
+
+
+document.getElementById(id)
+.style.display="block";
+
+
+}
+
+
+
+showBasic();
 
 </script>
 
