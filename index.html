@@ -181,6 +181,8 @@ font-size:13px;
 
 color:var(--sub);
 
+cursor:pointer;
+
 }
 
 
@@ -233,6 +235,8 @@ margin-top:10px;
 
 border-radius:12px;
 
+width:100%;
+
 }
 
 
@@ -246,11 +250,13 @@ border-radius:12px;
 
 
 
+<div id="home">
+
 <header>
 
 <h1>电镀ERP</h1>
 
-<p>收发存 · 外协管���系统</p>
+<p>收发存 · 外协管理系统</p>
 
 </header>
 
@@ -337,6 +343,8 @@ border-radius:12px;
 
 </div>
 
+
+</div>
 
 </div>
 
@@ -437,6 +445,114 @@ style="width:100%;padding:12px;margin-top:10px">
 
 
 
+<div id="outsource"
+style="display:none">
+
+
+<header>
+
+<h1>
+外协管理
+</h1>
+
+<p>
+外协发出与收回
+</p>
+
+</header>
+
+
+
+<div class="card">
+
+<h3>
+外协发出
+</h3>
+
+
+<select id="wxMaterial"
+style="width:100%;padding:12px">
+</select>
+
+
+<select id="wxFactory"
+style="width:100%;padding:12px;margin-top:10px">
+</select>
+
+
+
+<input id="wxQty"
+type="number"
+placeholder="数量"
+style="width:100%;padding:12px;margin-top:10px">
+
+
+
+<button onclick="sendOutsource()">
+
+发出
+
+</button>
+
+
+</div>
+
+
+
+
+<div class="card">
+
+<h3>
+外协收回
+</h3>
+
+
+<select id="backOrder"
+style="width:100%;padding:12px">
+
+</select>
+
+
+<input id="backQty"
+type="number"
+placeholder="收回数量"
+style="width:100%;padding:12px;margin-top:10px">
+
+
+<button onclick="receiveOutsource()">
+
+收回
+
+</button>
+
+
+</div>
+
+
+
+
+<div class="card">
+
+
+<h3>
+外协在外记录
+</h3>
+
+
+<div id="wxRecords">
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
 <div class="nav">
 
 
@@ -458,16 +574,7 @@ style="width:100%;padding:12px;margin-top:10px">
 </div>
 
 
-<div class="item">
-
-<b>▣</b>
-
-库存
-
-</div>
-
-
-<div class="item">
+<div class="item" onclick="showPage('outsource')">
 
 <b>↔</b>
 
@@ -508,9 +615,15 @@ localStorage.getItem(
 
 materials:[],
 
+suppliers:[],
+
+outsources:[],
+
 inventory:[],
 
 records:[],
+
+outsourceOrders:[],
 
 logs:[]
 
@@ -552,7 +665,7 @@ document.getElementById(
 "stock"
 ).innerHTML=
 
-DB.inventory.length;
+DB.inventory.reduce((sum,x)=>sum+x.qty,0);
 
 
 
@@ -560,9 +673,8 @@ document.getElementById(
 "wx"
 ).innerHTML=
 
-DB.records.filter(
-x=>x.type=="wx"
-).length;
+DB.outsourceOrders
+.reduce((sum,x)=>sum+(x.send-x.back),0);
 
 
 
@@ -580,22 +692,13 @@ document.querySelectorAll(
 )
 .forEach(
 x=>{
-if(x.id=="flow" || x.id=="home") {
 x.style.display="none";
-}
 }
 );
 
 
-if(id=="home"){
-
-document.querySelector("header").parentElement.style.display="block";
-
-}else if(id=="flow"){
-
-document.getElementById("flow").style.display="block";
-
-}
+document.getElementById(id)
+.style.display="block";
 
 
 }
@@ -649,6 +752,11 @@ document.getElementById(
 document.getElementById(
 "outMaterial"
 ).innerHTML=html;
+
+document.getElementById(
+"wxMaterial"
+).innerHTML=html;
+
 
 }
 
@@ -869,9 +977,332 @@ document.getElementById(
 
 
 
+// 外协单号
+
+function wxNo(){
+
+return "WX"
++
+Date.now();
+
+}
+
+
+
+//加载外协资料
+
+function loadWxData(){
+
+
+let m="<option value=''>选择物料</option>";
+
+
+DB.materials.forEach(x=>{
+
+m+=`
+
+<option value="${x.id}">
+${x.name}
+</option>
+
+`;
+
+});
+
+
+document.getElementById("wxMaterial").innerHTML=m;
+
+
+
+let f="<option value=''>选择厂家</option>";
+
+
+DB.outsources.forEach(x=>{
+
+f+=`
+
+<option value="${x.id}">
+${x.name}
+</option>
+
+`;
+
+});
+
+
+document.getElementById("wxFactory").innerHTML=f;
+
+
+
+}
+
+
+
+
+//外协发出
+
+function sendOutsource(){
+
+
+let mid=
+document.getElementById("wxMaterial").value;
+
+
+let fid=
+document.getElementById("wxFactory").value;
+
+
+let qty=
+Number(document.getElementById("wxQty").value);
+
+
+if(!mid || !fid || !qty){
+alert("请选择物料、厂家和输入数量");
+return;
+}
+
+
+let stock=
+DB.inventory.find(
+x=>x.id==mid
+);
+
+
+
+if(!stock || stock.qty<qty){
+
+alert("库存不足");
+
+return;
+
+}
+
+
+
+stock.qty-=qty;
+
+
+
+DB.outsourceOrders.push({
+
+no:wxNo(),
+
+material:mid,
+
+factory:fid,
+
+send:qty,
+
+back:0,
+
+time:new Date().toLocaleString()
+
+});
+
+
+
+DB.records.push({
+
+type:"外协发出",
+
+qty:qty
+
+});
+
+
+
+save();
+
+
+refresh();
+
+refreshWx();
+
+document.getElementById("wxMaterial").value="";
+
+document.getElementById("wxFactory").value="";
+
+document.getElementById("wxQty").value="";
+
+}
+
+
+
+//外协收回
+
+function receiveOutsource(){
+
+
+let index=
+document.getElementById("backOrder").value;
+
+
+let qty=
+Number(document.getElementById("backQty").value);
+
+
+if(!qty || index===""){
+alert("请选择订单和输入数量");
+return;
+}
+
+
+let order=
+DB.outsourceOrders[index];
+
+
+if(!order)return;
+
+
+let remain=order.send-order.back;
+
+if(qty>remain){
+alert("收回数量超过在外数量");
+return;
+}
+
+
+order.back+=qty;
+
+
+
+let stock=
+DB.inventory.find(
+x=>x.id==order.material
+);
+
+
+
+if(stock){
+
+stock.qty+=qty;
+
+}else{
+
+DB.inventory.push({
+
+id:order.material,
+
+qty:qty
+
+});
+
+}
+
+
+
+DB.records.push({
+
+type:"外协收回",
+
+qty:qty
+
+});
+
+
+save();
+
+
+refresh();
+
+refreshWx();
+
+document.getElementById("backQty").value="";
+
+}
+
+
+
+
+function refreshWx(){
+
+
+let html="";
+
+
+
+DB.outsourceOrders.forEach(
+(x,i)=>{
+
+
+let remain=
+x.send-x.back;
+
+
+html+=`
+
+<p>
+
+单号:${x.no}
+
+<br>
+
+发出:${x.send}
+
+<br>
+
+收回:${x.back}
+
+<br>
+
+在外:${remain}
+
+</p>
+
+<hr>
+
+`;
+
+
+
+});
+
+
+
+document.getElementById("wxRecords").innerHTML=html;
+
+
+
+let opt="<option value=''>选择订单</option>";
+
+
+DB.outsourceOrders.forEach(
+(x,i)=>{
+
+
+if(x.send-x.back>0){
+
+opt+=`
+
+<option value="${i}">
+${x.no}
+剩余:${x.send-x.back}
+
+</option>
+
+`;
+
+}
+
+
+});
+
+
+document.getElementById("backOrder").innerHTML=opt;
+
+
+
+}
+
+
+
 loadMaterialSelect();
 
+loadWxData();
+
 showRecords();
+
+refreshWx();
 
 </script>
 
