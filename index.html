@@ -675,6 +675,85 @@ style="width:100%;padding:12px;border-radius:12px">
 
 
 
+<div id="settingPage" style="display:none">
+
+<header>
+
+<h1>
+系统设置
+</h1>
+
+<p>
+数据管理与维护
+</p>
+
+</header>
+
+
+
+<div class="card">
+
+<h3>
+数据备份
+</h3>
+
+<p>导出当前所有数据为备份文件</p>
+
+<button onclick="backupData()">
+
+导出备份文件
+
+</button>
+
+</div>
+
+
+
+
+<div class="card">
+
+<h3>
+数据恢复
+</h3>
+
+<p>从备份文件恢复数据</p>
+
+<input 
+type="file"
+id="restoreFile"
+accept=".json"
+style="width:100%;padding:12px;border-radius:12px;margin-top:10px">
+
+<button onclick="restoreData()">
+
+恢复数据
+
+</button>
+
+</div>
+
+
+
+
+<div class="card">
+
+<h3>
+系统信息
+</h3>
+
+<p>版本：V1.0.0</p>
+
+<p>电镀ERP单机版</p>
+
+<p id="sysInfo"></p>
+
+</div>
+
+</div>
+
+
+
+
 <div class="nav">
 
 
@@ -716,9 +795,18 @@ style="width:100%;padding:12px;border-radius:12px">
 
 <div class="item" onclick="showPage('reportPage')">
 
-<b>▤</b>
+<b>📊</b>
 
 报表
+
+</div>
+
+
+<div class="item" onclick="showPage('settingPage')">
+
+<b>⚙</b>
+
+设置
 
 </div>
 
@@ -755,7 +843,17 @@ records:[],
 
 outsourceOrders:[],
 
-logs:[]
+logs:[],
+
+system:{
+
+name:"电镀ERP",
+
+version:"1.0.0",
+
+company:""
+
+}
 
 };
 
@@ -959,9 +1057,15 @@ time:new Date().toLocaleString()
 
 
 
-DB.logs.push(
-"入库 "+qty
-);
+DB.logs.push({
+
+time:new Date().toLocaleString(),
+
+action:"入库 "+qty,
+
+user:"操作员"
+
+});
 
 
 save();
@@ -1043,9 +1147,15 @@ time:new Date().toLocaleString()
 });
 
 
-DB.logs.push(
-"出库 "+qty
-);
+DB.logs.push({
+
+time:new Date().toLocaleString(),
+
+action:"出库 "+qty,
+
+user:"操作员"
+
+});
 
 
 save();
@@ -1244,6 +1354,16 @@ qty:qty
 });
 
 
+DB.logs.push({
+
+time:new Date().toLocaleString(),
+
+action:"外协发出 "+qty,
+
+user:"操作员"
+
+});
+
 
 save();
 
@@ -1330,6 +1450,17 @@ DB.records.push({
 type:"外协收回",
 
 qty:qty
+
+});
+
+
+DB.logs.push({
+
+time:new Date().toLocaleString(),
+
+action:"外协收回 "+qty,
+
+user:"操作员"
 
 });
 
@@ -1818,6 +1949,142 @@ outCount;
 
 
 
+// 数据备份
+
+function backupData(){
+
+
+let data =
+JSON.stringify(
+DB,
+null,
+2
+);
+
+
+
+let blob =
+new Blob(
+[data],
+{
+type:"application/json"
+}
+);
+
+
+
+let url =
+URL.createObjectURL(blob);
+
+
+
+let a =
+document.createElement("a");
+
+
+a.href=url;
+
+
+a.download=
+"电镀ERP备份_"+
+new Date().toLocaleString()
++".json";
+
+
+a.click();
+
+
+}
+
+
+
+// 数据恢复
+
+function restoreData(){
+
+
+let file =
+document.getElementById(
+"restoreFile"
+)
+.files[0];
+
+
+if(!file){
+
+alert("请选择备份文件");
+
+return;
+
+}
+
+
+
+let reader =
+new FileReader();
+
+
+
+reader.onload=function(e){
+
+
+try{
+
+DB =
+JSON.parse(
+e.target.result
+);
+
+
+
+save();
+
+
+
+alert(
+"恢复成功，请刷新页面"
+);
+
+}catch(err){
+
+alert("文件格式错误，无法恢复");
+
+}
+
+
+};
+
+
+
+reader.readAsText(file);
+
+
+
+}
+
+
+
+// 自动保存
+
+window.onbeforeunload=function(){
+
+save();
+
+};
+
+
+
+// 系统初始化
+
+function initSystem(){
+
+document.getElementById("sysInfo").innerHTML=
+"数据量："+JSON.stringify(DB).length+" 字节";
+
+}
+
+
+
 loadMaterialSelect();
 
 loadWxData();
@@ -1831,6 +2098,8 @@ refreshInventory();
 renderReport();
 
 dashboard();
+
+initSystem();
 
 </script>
 
