@@ -237,6 +237,8 @@ border-radius:12px;
 
 width:100%;
 
+box-sizing:border-box;
+
 }
 
 
@@ -547,6 +549,65 @@ style="width:100%;padding:12px;margin-top:10px">
 </div>
 
 
+</div>
+
+
+
+
+<div id="inventoryPage" style="display:none">
+
+<header>
+
+<h1>
+库存中心
+</h1>
+
+<p>
+实时库存与预警
+</p>
+
+</header>
+
+
+
+<div class="card">
+
+<input 
+id="stockSearch"
+placeholder="搜索物料"
+oninput="renderInventory()"
+style="width:100%;padding:12px;border-radius:12px">
+
+</div>
+
+
+
+<div class="card">
+
+<h3>
+库存列表
+</h3>
+
+<div id="inventoryList">
+
+</div>
+
+</div>
+
+
+
+
+<div class="card">
+
+<h3>
+库存统计
+</h3>
+
+<div id="stockReport">
+
+</div>
+
+</div>
 
 </div>
 
@@ -570,6 +631,15 @@ style="width:100%;padding:12px;margin-top:10px">
 <b>⇅</b>
 
 收发
+
+</div>
+
+
+<div class="item" onclick="showPage('inventoryPage')">
+
+<b>▣</b>
+
+库存
 
 </div>
 
@@ -611,7 +681,6 @@ localStorage.getItem(
 )
 
 ||{
-
 
 materials:[],
 
@@ -840,6 +909,8 @@ refresh();
 
 showRecords();
 
+refreshInventory();
+
 document.getElementById("inMaterial").value="";
 
 document.getElementById("inQty").value="";
@@ -921,6 +992,8 @@ save();
 refresh();
 
 showRecords();
+
+refreshInventory();
 
 document.getElementById("outMaterial").value="";
 
@@ -1205,6 +1278,8 @@ save();
 
 refresh();
 
+refreshInventory();
+
 refreshWx();
 
 document.getElementById("backQty").value="";
@@ -1296,6 +1371,193 @@ document.getElementById("backOrder").innerHTML=opt;
 
 
 
+// 获取物料名称
+
+function materialName(id){
+
+let m=
+DB.materials.find(
+x=>x.id==id
+);
+
+
+return m?
+m.name:
+"未知物料";
+
+}
+
+
+
+
+//库存显示
+
+function renderInventory(){
+
+
+let key=
+document.getElementById(
+"stockSearch"
+)?
+.value
+.toLowerCase()
+:
+"";
+
+
+
+let html="";
+
+
+
+DB.inventory.forEach(x=>{
+
+
+let name=
+materialName(x.id);
+
+
+
+if(
+key &&
+!name.toLowerCase().includes(key)
+)
+return;
+
+
+
+let m=
+DB.materials.find(
+a=>a.id==x.id
+);
+
+
+
+let safe=
+m&&m.safe?
+m.safe:
+0;
+
+
+
+let warn=
+x.qty<=safe;
+
+
+
+html+=`
+
+<div>
+
+<h3>
+
+${name}
+
+</h3>
+
+
+<p>
+
+库存数量：
+
+${x.qty}
+
+</p>
+
+
+<p>
+
+安全库存：
+
+${safe}
+
+</p>
+
+
+
+${
+warn
+?
+"<b style='color:red'>⚠ 库存不足</b>"
+:
+"<b style='color:#007aff'>正常</b>"
+}
+
+
+</div>
+
+<hr>
+
+`;
+
+
+
+});
+
+
+
+document.getElementById(
+"inventoryList"
+).innerHTML=
+html||
+"暂无库存";
+
+
+
+}
+
+
+
+
+//统计
+
+function stockStatistics(){
+
+
+let total=0;
+
+
+DB.inventory.forEach(
+x=>{
+
+total+=Number(x.qty);
+
+});
+
+
+
+document.getElementById(
+"stockReport"
+).innerHTML=
+
+`
+
+<p>
+物料种类：
+${DB.inventory.length}
+</p>
+
+<p>
+库存总数量：
+${total}
+</p>
+
+`;
+
+}
+
+
+
+function refreshInventory(){
+
+renderInventory();
+
+stockStatistics();
+
+}
+
+
+
 loadMaterialSelect();
 
 loadWxData();
@@ -1303,6 +1565,8 @@ loadWxData();
 showRecords();
 
 refreshWx();
+
+refreshInventory();
 
 </script>
 
